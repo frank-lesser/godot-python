@@ -1,9 +1,10 @@
 from pythonscriptcffi import lib
 
-from .hazmat.base import BaseBuiltin
-from .hazmat.allocator import godot_basis_alloc
-from .vector3 import Vector3
-from .quat import Quat
+from godot.hazmat.base import BaseBuiltin
+from godot.hazmat.allocator import godot_basis_alloc
+from godot.hazmat.allocator import godot_vector3_alloc
+from godot.vector3 import Vector3
+from godot.quat import Quat
 
 
 class Basis(BaseBuiltin):
@@ -16,9 +17,9 @@ class Basis(BaseBuiltin):
 
     @classmethod
     def build_from_rows(cls, row0, row1, row2):
-        cls._check_param_type('row0', row0, Vector3)
-        cls._check_param_type('row1', row1, Vector3)
-        cls._check_param_type('row2', row2, Vector3)
+        cls._check_param_type("row0", row0, Vector3)
+        cls._check_param_type("row1", row1, Vector3)
+        cls._check_param_type("row2", row2, Vector3)
         gd_ptr = godot_basis_alloc()
         lib.godot_basis_new_with_rows(gd_ptr, row0._gd_ptr, row1._gd_ptr, row2._gd_ptr)
         return cls.build_from_gdobj(gd_ptr, steal=True)
@@ -32,12 +33,13 @@ class Basis(BaseBuiltin):
             lib.godot_basis_new_with_euler_quat(gd_ptr, euler._gd_ptr)
         else:
             raise TypeError("Param `euler` should be of type `%s`" % (Vector3, Quat))
+
         return cls.build_from_gdobj(gd_ptr, steal=True)
 
     @classmethod
     def build_from_axis_and_angle(cls, axis, phi):
-        cls._check_param_type('axis', axis, Vector3)
-        cls._check_param_float('phi', phi)
+        cls._check_param_type("axis", axis, Vector3)
+        cls._check_param_float("phi", phi)
         gd_ptr = godot_basis_alloc()
         lib.godot_basis_new_with_axis_and_angle(gd_ptr, axis._gd_ptr, phi)
         return cls.build_from_gdobj(gd_ptr, steal=True)
@@ -48,12 +50,23 @@ class Basis(BaseBuiltin):
 
     def __init__(self):  # TODO: allow rows as param ?
         self._gd_ptr = godot_basis_alloc()
+        x = godot_vector3_alloc()
+        lib.godot_vector3_new(x, 1, 0, 0)
+        y = godot_vector3_alloc()
+        lib.godot_vector3_new(y, 0, 1, 0)
+        z = godot_vector3_alloc()
+        lib.godot_vector3_new(z, 0, 0, 1)
+        lib.godot_basis_new_with_rows(self._gd_ptr, x, y, z)
 
     def __repr__(self):
-        return "<{n}(({v.x.x}, {v.x.y}, {v.x.z}), ({v.y.x}, {v.y.y}, {v.y.z}), ({v.z.x}, {v.z.y}, {v.z.z}))>".format(n=type(self).__name__, v=self)
+        return "<{n}(({v.x.x}, {v.x.y}, {v.x.z}), ({v.y.x}, {v.y.y}, {v.y.z}), ({v.z.x}, {v.z.y}, {v.z.z}))>".format(
+            n=type(self).__name__, v=self
+        )
 
     def __eq__(self, other):
-        return isinstance(other, Basis) and lib.godot_basis_operator_equal(self._gd_ptr, other._gd_ptr)
+        return isinstance(other, Basis) and lib.godot_basis_operator_equal(
+            self._gd_ptr, other._gd_ptr
+        )
 
     def __ne__(self, other):
         return not self == other
@@ -68,6 +81,7 @@ class Basis(BaseBuiltin):
         if isinstance(val, Basis):
             gd_obj = lib.godot_basis_operator_add(self._gd_ptr, val._gd_ptr)
             return Basis.build_from_gdobj(gd_obj)
+
         else:
             return NotImplemented
 
@@ -75,6 +89,7 @@ class Basis(BaseBuiltin):
         if isinstance(val, Basis):
             gd_obj = lib.godot_basis_operator_subtract(self._gd_ptr, val._gd_ptr)
             return Basis.build_from_gdobj(gd_obj)
+
         else:
             return NotImplemented
 
@@ -96,29 +111,35 @@ class Basis(BaseBuiltin):
 
     @property
     def x(self):
-        return Vector3.build_from_gdobj(lib.godot_basis_get_axis(self._gd_ptr, self.AXIS_X))
+        return Vector3.build_from_gdobj(
+            lib.godot_basis_get_axis(self._gd_ptr, self.AXIS_X)
+        )
 
     @property
     def y(self):
-        return Vector3.build_from_gdobj(lib.godot_basis_get_axis(self._gd_ptr, self.AXIS_Y))
+        return Vector3.build_from_gdobj(
+            lib.godot_basis_get_axis(self._gd_ptr, self.AXIS_Y)
+        )
 
     @property
     def z(self):
-        return Vector3.build_from_gdobj(lib.godot_basis_get_axis(self._gd_ptr, self.AXIS_Z))
+        return Vector3.build_from_gdobj(
+            lib.godot_basis_get_axis(self._gd_ptr, self.AXIS_Z)
+        )
 
     @x.setter
     def x(self, val):
-        self._check_param_type('val', val, Vector3)
+        self._check_param_type("val", val, Vector3)
         lib.godot_basis_set_axis(self._gd_ptr, self.AXIS_X, val._gd_ptr)
 
     @y.setter
     def y(self, val):
-        self._check_param_type('val', val, Vector3)
+        self._check_param_type("val", val, Vector3)
         lib.godot_basis_set_axis(self._gd_ptr, self.AXIS_Y, val._gd_ptr)
 
     @z.setter
     def z(self, val):
-        self._check_param_type('val', val, Vector3)
+        self._check_param_type("val", val, Vector3)
         lib.godot_basis_set_axis(self._gd_ptr, self.AXIS_Z, val._gd_ptr)
 
     # Methods
@@ -146,25 +167,25 @@ class Basis(BaseBuiltin):
         return Basis.build_from_gdobj(gd_obj)
 
     def rotated(self, axis, phi):
-        self._check_param_type('axis', axis, Vector3)
+        self._check_param_type("axis", axis, Vector3)
         gd_obj = lib.godot_basis_rotated(self._gd_ptr, axis._gd_ptr, phi)
         return Basis.build_from_gdobj(gd_obj)
 
     def scaled(self, scale):
-        self._check_param_type('scale', scale, Vector3)
+        self._check_param_type("scale", scale, Vector3)
         gd_obj = lib.godot_basis_scaled(self._gd_ptr, scale._gd_ptr)
         return Basis.build_from_gdobj(gd_obj)
 
     def tdotx(self, with_):
-        self._check_param_type('with_', with_, Vector3)
+        self._check_param_type("with_", with_, Vector3)
         return lib.godot_basis_tdotx(self._gd_ptr, with_._gd_ptr)
 
     def tdoty(self, with_):
-        self._check_param_type('with_', with_, Vector3)
+        self._check_param_type("with_", with_, Vector3)
         return lib.godot_basis_tdoty(self._gd_ptr, with_._gd_ptr)
 
     def tdotz(self, with_):
-        self._check_param_type('with_', with_, Vector3)
+        self._check_param_type("with_", with_, Vector3)
         return lib.godot_basis_tdotz(self._gd_ptr, with_._gd_ptr)
 
     def transposed(self):
@@ -172,11 +193,11 @@ class Basis(BaseBuiltin):
         return Basis.build_from_gdobj(gd_obj)
 
     def xform(self, vect):
-        self._check_param_type('vect', vect, Vector3)
+        self._check_param_type("vect", vect, Vector3)
         gd_obj = lib.godot_basis_xform(self._gd_ptr, vect._gd_ptr)
         return Vector3.build_from_gdobj(gd_obj)
 
     def xform_inv(self, vect):
-        self._check_param_type('vect', vect, Vector3)
+        self._check_param_type("vect", vect, Vector3)
         gd_obj = lib.godot_basis_xform_inv(self._gd_ptr, vect._gd_ptr)
         return Vector3.build_from_gdobj(gd_obj)

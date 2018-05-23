@@ -1,8 +1,8 @@
 from pythonscriptcffi import lib, ffi
 
-from .hazmat.base import BaseBuiltinWithGDObjOwnership
-from .hazmat.allocator import godot_node_path_alloc, godot_variant_alloc
-from .hazmat.tools import pyobj_to_gdobj, godot_string_to_pyobj
+from godot.hazmat.base import BaseBuiltinWithGDObjOwnership
+from godot.hazmat.allocator import godot_node_path_alloc, godot_variant_alloc
+from godot.hazmat.tools import pyobj_to_gdobj, godot_string_to_pyobj
 
 
 def str_to_gd_node_path(path, to_variant=False):
@@ -26,7 +26,7 @@ class NodePath(BaseBuiltinWithGDObjOwnership):
         return cpy_gdobj
 
     def __init__(self, path):
-        self._check_param_type('path', path, str)
+        self._check_param_type("path", path, str)
         gd_str = pyobj_to_gdobj(path)
         self._gd_ptr = godot_node_path_alloc()
         lib.godot_node_path_new(self._gd_ptr, gd_str)
@@ -47,7 +47,7 @@ class NodePath(BaseBuiltinWithGDObjOwnership):
         return ffi.string(lib.godot_string_wide_str(ffi.addressof(gd_repr)))
 
     def get_name(self, idx):
-        self._check_param_type('idx', idx, int)
+        self._check_param_type("idx", idx, int)
         name = lib.godot_node_path_get_name(self._gd_ptr, idx)
         return godot_string_to_pyobj(ffi.addressof(name))
 
@@ -59,7 +59,7 @@ class NodePath(BaseBuiltinWithGDObjOwnership):
         return godot_string_to_pyobj(ffi.addressof(concatenated))
 
     def get_subname(self, idx):
-        self._check_param_type('idx', idx, int)
+        self._check_param_type("idx", idx, int)
         subname = lib.godot_node_path_get_subname(self._gd_ptr, idx)
         return godot_string_to_pyobj(ffi.addressof(subname))
 

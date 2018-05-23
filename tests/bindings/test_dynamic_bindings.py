@@ -1,8 +1,17 @@
 import pytest
 
 from godot.bindings import (
-    Object, Node, Viewport, EditorPlugin, LineEdit,
-    Engine, _Engine, KEY_ESCAPE, OK, FAILED)
+    Object,
+    Node,
+    Viewport,
+    Input,
+    LineEdit,
+    Engine,
+    _Engine,
+    KEY_ESCAPE,
+    OK,
+    FAILED,
+)
 
 
 class TestDynamicBindings:
@@ -39,8 +48,8 @@ class TestDynamicBindings:
         assert isinstance(Node, type)
 
     def test_class_constants(self):
-        assert hasattr(EditorPlugin, 'CONTAINER_TOOLBAR')
-        assert isinstance(EditorPlugin.CONTAINER_TOOLBAR, int)
+        assert hasattr(Input, "MOUSE_MODE_VISIBLE")
+        assert isinstance(Input.MOUSE_MODE_VISIBLE, int)
 
     def test_class_inheritance(self):
         assert issubclass(Node, Object)
@@ -48,7 +57,7 @@ class TestDynamicBindings:
         assert issubclass(Viewport, Object)
 
     def test_class_methods(self):
-        assert hasattr(LineEdit, 'is_secret')
+        assert hasattr(LineEdit, "is_secret")
         v = LineEdit()
         assert callable(v.is_secret)
         assert v.is_secret() is False
@@ -56,12 +65,12 @@ class TestDynamicBindings:
         v.set_secret(True)
         assert v.is_secret() is True
 
-    @pytest.mark.xfail(reason='Not implemented yet.')
+    @pytest.mark.xfail(reason="Not implemented yet.")
     def test_class_signals(self):
         pass
 
     def test_class_properties(self):
-        assert hasattr(LineEdit, 'max_length')
+        assert hasattr(LineEdit, "max_length")
         v = LineEdit()
         assert v.max_length == 0
         v.max_length = 42

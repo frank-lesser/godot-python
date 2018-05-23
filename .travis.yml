@@ -2,24 +2,33 @@ language: cpp
 
 sudo: false
 
-compiler:
- - gcc
-  # - clang
-
-python: '3.6'
+os:
+  - linux
+  - osx
 
 env:
   global:
-    - LLVM_VERSION=3.8.0
-    - LLVM_ARCHIVE_PATH=$HOME/clang+llvm.tar.xz
     - DISPLAY=":99.0"
     - AUDIODEV="null"
     - XVFB_OPTS=":99.0 -ac -screen 0 1280x1024x24 -ac +extension GLX +extension RANDR +render -noreset"
   matrix:
-    - TARGET_PLATFORM=x11-64 PYTHON_BACKEND=cpython
-    - TARGET_PLATFORM=x11-32 PYTHON_BACKEND=cpython
-    - TARGET_PLATFORM=x11-64 PYTHON_BACKEND=pypy
-    - TARGET_PLATFORM=x11-32 PYTHON_BACKEND=pypy
+    - BITS=64 PYTHON_BACKEND=cpython
+    - BITS=64 PYTHON_BACKEND=pypy
+    - BITS=32 PYTHON_BACKEND=cpython
+    - BITS=32 PYTHON_BACKEND=pypy
+
+matrix:
+  allow_failures:
+    # TODO: fix x11-32 ! (use docker for the build ?)
+    - os: linux
+      env: BITS=32 PYTHON_BACKEND=pypy
+    - os: linux
+      env: BITS=32 PYTHON_BACKEND=cpython
+  exclude:
+    - os: osx
+      env: BITS=32 PYTHON_BACKEND=pypy
+    - os: osx
+      env: BITS=32 PYTHON_BACKEND=cpython
 
 addons:
   apt:
@@ -53,28 +62,29 @@ addons:
       - valgrind
 
 before_install:
-  - pyenv shell 3.6.3
+  - python --version
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; brew upgrade python; brew install scons; fi;
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then pyenv shell 3.6 ; fi
   - pip3 install virtualenv --user
-  - if [[ "$CXX" == "clang++" ]]; then wget http://llvm.org/releases/$LLVM_VERSION/clang+llvm-$LLVM_VERSION-x86_64-linux-gnu-ubuntu-14.04.tar.xz -O $LLVM_ARCHIVE_PATH; fi
-  - if [[ "$CXX" == "clang++" ]]; then mkdir $HOME/clang+llvm; fi
-  - if [[ "$CXX" == "clang++" ]]; then tar xf $LLVM_ARCHIVE_PATH -C $HOME/clang+llvm --strip-components 1; fi
-  - if [[ "$CXX" == "clang++" ]]; then export PATH=$HOME/clang+llvm/bin:$PATH; fi
-  - if [[ "$CXX" == "clang++" ]]; then clang --version; fi
 # Needed because scons doesn't inherit the customized $PATH env
-  - if [[ "$CXX" == "clang++" ]]; then export CC=$HOME/clang+llvm/bin/clang; fi
-  - if [[ "$CXX" == "g++" ]]; then export CC=gcc-7; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CC=gcc-7; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export TARGET_PLATFORM=x11-$BITS; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export TARGET_PLATFORM=osx-$BITS; fi
   - python --version
   - $CC --version
   - scons --version
 
 before_script:
 # Start X11 server
-  - "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- $XVFB_OPTS"
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- $XVFB_OPTS; fi;
   - sleep 3 # give xvfb some time to start
+
 
 script:
   - set -e  # Enable fail on first error
-  - scons platform=$TARGET_PLATFORM backend=$PYTHON_BACKEND CC=$CC release_suffix=$TRAVIS_BRANCH release
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then scons platform=$TARGET_PLATFORM checkstyle; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then scons platform=$TARGET_PLATFORM backend=$PYTHON_BACKEND CC=$CC gdnative_parse_cpp="clang -E" release_suffix=$TRAVIS_BRANCH release; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then scons platform=$TARGET_PLATFORM backend=$PYTHON_BACKEND CC=$CC release_suffix=$TRAVIS_BRANCH release; fi
 # Tests need x11 server with opengl3 or compile godot with platform=server (both not working so far...)
   # - LIBGL_ALWAYS_SOFTWARE=1 scons debugger=valgrind platform=$TARGET_PLATFORM backend=$PYTHON_BACKEND CC=$CC test
   - set +e
